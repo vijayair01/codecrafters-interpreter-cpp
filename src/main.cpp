@@ -3,16 +3,21 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include "scanner.h"
 
 std::string read_file_contents(const std::string& filename);
+using lox::Scanner;
+
+void print_tokens(const std::vector<lox::Token>& tokens) {
+    for (const auto& token : tokens) {
+        std::cout << token << std::endl;
+    }
+}
 
 int main(int argc, char *argv[]) {
     // Disable output buffering
     std::cout << std::unitbuf;
     std::cerr << std::unitbuf;
-
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    std::cerr << "Logs from your program will appear here!" << std::endl;
 
     if (argc < 3) {
         std::cerr << "Usage: ./your_program tokenize <filename>" << std::endl;
@@ -23,15 +28,15 @@ int main(int argc, char *argv[]) {
 
     if (command == "tokenize") {
         std::string file_contents = read_file_contents(argv[2]);
-        
-        // Uncomment this block to pass the first stage
-        // 
-        // if (!file_contents.empty()) {
-        //     std::cerr << "Scanner not implemented" << std::endl;
-        //     return 1;
-        // }
-        // std::cout << "EOF  null" << std::endl; // Placeholder, remove this line when implementing the scanner
-        
+
+        if (!file_contents.empty()) {
+            Scanner scanner(file_contents);
+            auto tokens = scanner.get_tokens();
+            print_tokens(tokens);
+        }
+        else {
+            std::cout << "EOF  null" << std::endl;
+        }        
     } else {
         std::cerr << "Unknown command: " << command << std::endl;
         return 1;
