@@ -12,6 +12,17 @@ void Scanner::add_token(std::string s)
             return;
         }
     }
+    if(reservedkeywords.find(s) != reservedkeywords.end())
+    {
+        auto t = s;
+        std::transform(t.begin(), t.end(), t.begin(), ::tolower);
+        std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+        std::string lexeme = "\"" + s + "\"";
+        tokens.push_back(Token(reservedkeywords.at(s), s, t, line_number));
+        return;
+    }
+    std::string lexeme = "\"" + s + "\"";
+    tokens.push_back(Token(TokenType::STRING, lexeme, s, line_number));
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token)
@@ -19,6 +30,18 @@ std::ostream &operator<<(std::ostream &os, const Token &token)
     if(tokenident.find(token.type) != tokenident.end())
     {
         os << tokenident.at(token.type).first << " " << tokenident.at(token.type).second << " null";
+    }
+    else if(token.type == TokenType::STRING)
+    {
+        os << "STRING " << token.lexeme << " " << token.literal;
+    }
+    else if(token.type >= TokenType::AND && token.type <= TokenType::CLASS)
+    {
+        os << token.lexeme << " " << token.literal << " null";
+    }
+    else
+    {
+        os << "UNKNOWN " << token.lexeme << " " << token.literal;
     }
     return os;
 }
@@ -37,7 +60,7 @@ void Scanner::read_file()
 void Scanner::scanChar()
 {
     char c = advance();
-    switch (c)
+    switch(c)
     {
     case '(':
     case ')':
@@ -49,7 +72,6 @@ void Scanner::scanChar()
     case '+':
     case ';':
     case '*':
-    case '/':
         add_token(std::string(1, c));
         break;
     case '#':
@@ -57,44 +79,80 @@ void Scanner::scanChar()
     case '$':
     case '^':
     case '%':
-        std::cerr << "[line " << line_number << "] Error: Unexpected character: " << c << std::endl;
+        std::cerr << "[line " << line_number << "] Error: Unexpected character: " << c
+                  << std::endl;
         error.set_retvalue(65);
         break;
     case '!':
-        if (match('='))
+    case '=':
+    case '<':
+    case '>':
         {
-            advance();
-            add_token("!=");
+            std::string curr = std::string(1, c);
+            if(peek() == '=')
+            {
+                curr += peek();
+                add_token(curr);
+                advance();
+            }
+            else
+            {
+                add_token(curr);
+            }
+        }
+        break;
+    case '/':
+        if(peek() == '/')
+        {
+            while(peek() != '\n' && peek() != '\0')
+            {
+                advance();
+            }
         }
         else
         {
             add_token(std::string(1, c));
         }
         break;
-    case '=':
-        if (match('='))
+    break;
+    case '\"':
         {
-            advance();
-            add_token("==");
+            char quote = c;
+            std::string ans = "";
+            while(peek() != quote && peek() != '\0')
+            {
+                ans += peek();
+                if(peek() == '\n')
+                {
+                    line_number++;
+                }
+                advance();
+            }
+            if(peek() == '\0')
+            {
+                std::cerr << "[line " << line_number << "] Error: Unterminated string." << std::endl;
+                error.set_retvalue(65);
+            }
+            else{
+                add_token(ans);
+                advance();
+            }
         }
-        else
-        {
-            add_token(std::string(1, c));
-        }
+        break;
+    case '\n':
+        line_number++;
+        break;
+    case '\t':
+    case ' ':
         break;
     default:
         break;
     }
 }
 
-bool Scanner::match(char c)
+char Scanner::peek()
 {
-    if (p_file_contents[current] == c)
-    {
-        current++;
-        return true;
-    }
-    return false;
+    return p_file_contents[current];
 }
 
 char Scanner::advance()

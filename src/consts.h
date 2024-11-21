@@ -18,10 +18,15 @@ enum TokenType
     SEMICOLON,
     SLASH,
     STAR,
-    BANG,
     EQUAL,
-    BANG_EQUAL,
     EQUAL_EQUAL,
+    BANG,
+    BANG_EQUAL,
+    LESS,
+    LESS_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    STRING,
     AND,
     CLASS,
     END_OF_FILE
@@ -40,11 +45,19 @@ const std::map<TokenType, std::pair<std::string, std::string>> tokenident = {
     {TokenType::SEMICOLON, {"SEMICOLON", ";"}},
     {TokenType::SLASH, {"SLASH", "/"}},
     {TokenType::STAR, {"STAR", "*"}},
-    {TokenType::BANG, {"BANG", "!"}},
     {TokenType::EQUAL, {"EQUAL", "="}},
-    {TokenType::BANG_EQUAL, {"BANG_EQUAL", "!="}},
     {TokenType::EQUAL_EQUAL, {"EQUAL_EQUAL", "=="}},
+    {TokenType::BANG, {"BANG", "!"}},
+    {TokenType::BANG_EQUAL, {"BANG_EQUAL", "!="}},
+    {TokenType::LESS, {"LESS", "<"}},
+    {TokenType::LESS_EQUAL, {"LESS_EQUAL", "<="}},
+    {TokenType::GREATER, {"GREATER", ">"}},
+    {TokenType::GREATER_EQUAL, {"GREATER_EQUAL", ">="}},
     {TokenType::END_OF_FILE, {"EOF", ""}}};
+
+const std::map<std::string, TokenType> reservedkeywords = {
+    {"and", TokenType::AND},
+    {"class", TokenType::CLASS}};
 
 } // namespace lox
 

@@ -49,7 +49,7 @@ class Scanner {
     void add_token(std::string s);
     char advance();
     void scanChar();
-    bool match(char c);
+    char peek();
 
     std::vector<Token> tokens;
     std::string p_file_contents;
