@@ -27,6 +27,7 @@ enum TokenType
     GREATER,
     GREATER_EQUAL,
     STRING,
+    NUMBER,
     AND,
     CLASS,
     END_OF_FILE

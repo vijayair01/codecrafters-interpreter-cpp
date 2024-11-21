@@ -21,6 +21,14 @@ void Scanner::add_token(std::string s)
         tokens.push_back(Token(reservedkeywords.at(s), s, t, line_number));
         return;
     }
+    int count = std::count(s.begin(), s.end(), '.');
+    if(std::find_if(s.begin(), s.end(), [](char &c) { return !isdigit(c) && c != '.'; }) ==
+       s.end() && count <= 1)
+    {
+        std::string num = count == 1 ? s : s + ".0";
+        tokens.push_back(Token(TokenType::NUMBER, s, num, line_number));
+        return;
+    }
     std::string lexeme = "\"" + s + "\"";
     tokens.push_back(Token(TokenType::STRING, lexeme, s, line_number));
 }
@@ -146,6 +154,18 @@ void Scanner::scanChar()
     case ' ':
         break;
     default:
+    {
+        if(isalnum(c) || c == '.')
+        {
+            std::string ans = std::string(1, c);
+            while(isalnum(peek()) || peek() == '.')
+            {
+                ans += peek();
+                advance();
+            }
+            add_token(ans);
+        }
+    }
         break;
     }
 }
