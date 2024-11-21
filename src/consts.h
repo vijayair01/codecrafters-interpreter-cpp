@@ -9,25 +9,42 @@ enum TokenType
 {
     LEFT_PAREN,
     RIGHT_PAREN,
+    LEFT_BRACE,
+    RIGHT_BRACE,
+    COMMA,
+    DOT,
+    MINUS,
+    PLUS,
+    SEMICOLON,
+    SLASH,
+    STAR,
+    BANG,
+    EQUAL,
     BANG_EQUAL,
+    EQUAL_EQUAL,
     AND,
     CLASS,
     END_OF_FILE
 };
 
-// token type and laxeme
-const std::map<TokenType, std::string> tokenlaxeme = {{TokenType::LEFT_PAREN, "("},
-                                                      {TokenType::RIGHT_PAREN, ")"},
-                                                      {TokenType::BANG_EQUAL, "!="},
-                                                      {TokenType::AND, "and"},
-                                                      {TokenType::CLASS, "class"},
-                                                      {TokenType::END_OF_FILE, ""}};
-
 // token type and identifier
-const std::map<TokenType, std::string> tokenident = {{TokenType::LEFT_PAREN, "LEFT_PAREN"},
-                                                     {TokenType::RIGHT_PAREN, "RIGHT_PAREN"},
-                                                     {TokenType::BANG_EQUAL, "BANG_EQUAL"},
-                                                     {TokenType::END_OF_FILE, "EOF"}};
+const std::map<TokenType, std::pair<std::string, std::string>> tokenident = {
+    {TokenType::LEFT_PAREN, {"LEFT_PAREN", "("}},
+    {TokenType::RIGHT_PAREN, {"RIGHT_PAREN", ")"}},
+    {TokenType::LEFT_BRACE, {"LEFT_BRACE", "{"}},
+    {TokenType::RIGHT_BRACE, {"RIGHT_BRACE", "}"}},
+    {TokenType::COMMA, {"COMMA", ","}},
+    {TokenType::DOT, {"DOT", "."}},
+    {TokenType::MINUS, {"MINUS", "-"}},
+    {TokenType::PLUS, {"PLUS", "+"}},
+    {TokenType::SEMICOLON, {"SEMICOLON", ";"}},
+    {TokenType::SLASH, {"SLASH", "/"}},
+    {TokenType::STAR, {"STAR", "*"}},
+    {TokenType::BANG, {"BANG", "!"}},
+    {TokenType::EQUAL, {"EQUAL", "="}},
+    {TokenType::BANG_EQUAL, {"BANG_EQUAL", "!="}},
+    {TokenType::EQUAL_EQUAL, {"EQUAL_EQUAL", "=="}},
+    {TokenType::END_OF_FILE, {"EOF", ""}}};
 
 } // namespace lox
 

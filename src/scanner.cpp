@@ -2,15 +2,24 @@
 
 namespace lox {
 
-void Scanner::add_token(const std::string& str, TokenType type)
+void Scanner::add_token(std::string s)
 {
-    Token token(str, type);
-    tokens.push_back(token);
+    for(auto tokeniter = tokenident.begin(); tokeniter != tokenident.end(); tokeniter++)
+    {
+        if(tokeniter->second.second == s)
+        {
+            tokens.push_back(Token(tokeniter->first, "", "", line_number));
+            return;
+        }
+    }
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token)
 {
-    os << token.identifier << " " << token.lexeme << " null";
+    if(tokenident.find(token.type) != tokenident.end())
+    {
+        os << tokenident.at(token.type).first << " " << tokenident.at(token.type).second << " null";
+    }
     return os;
 }
 
@@ -31,33 +40,99 @@ void Scanner::scanChar()
     switch (c)
     {
     case '(':
-        add_token("(", TokenType::LEFT_PAREN);
-        break;
     case ')':
-        add_token(")", TokenType::RIGHT_PAREN);
+    case '{':
+    case '}':
+    case ',':
+    case '.':
+    case '-':
+    case '+':
+    case ';':
+    case '*':
+    case '/':
+        add_token(std::string(1, c));
+        break;
+    case '#':
+    case '@':
+    case '$':
+    case '^':
+    case '%':
+        std::cerr << "[line " << line_number << "] Error: Unexpected character: " << c << std::endl;
+        error.set_retvalue(65);
         break;
     case '!':
-        if (advance() == '=')
+        if (match('='))
         {
-            add_token("!=", TokenType::BANG_EQUAL);
-            break;
+            advance();
+            add_token("!=");
         }
-        current--;
-        add_token("!", TokenType::BANG_EQUAL);
+        else
+        {
+            add_token(std::string(1, c));
+        }
+        break;
+    case '=':
+        if (match('='))
+        {
+            advance();
+            add_token("==");
+        }
+        else
+        {
+            add_token(std::string(1, c));
+        }
         break;
     default:
         break;
     }
 }
 
+bool Scanner::match(char c)
+{
+    if (p_file_contents[current] == c)
+    {
+        current++;
+        return true;
+    }
+    return false;
+}
+
 char Scanner::advance()
 {
     if(current >= p_file_contents.size())
     {
-        add_token("", TokenType::END_OF_FILE);
+        add_token("");
         throw std::runtime_error("Reached EOF");
         return '\0';
     }
     return p_file_contents[current++];
 }
+
+void ErrorInScanner::add_error(std::string s)
+{
+    msg.push_back(std::move(s));
+}
+
+ErrorInScanner::~ErrorInScanner()
+{
+    for(const auto &error: msg)
+    {
+        std::cerr << error << std::endl;
+    }
+    if(retvalue)
+    {
+        exit(retvalue);
+    }
+}
+
+int ErrorInScanner::get_retvalue() const
+{
+    return retvalue;
+}
+
+void ErrorInScanner::set_retvalue(int value)
+{
+    retvalue = value;
+}
+
 } // namespace lox

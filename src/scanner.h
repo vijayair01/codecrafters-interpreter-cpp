@@ -8,29 +8,37 @@
 #include <algorithm>
 
 namespace lox{
-class Token{
+
+class ErrorInScanner
+{
   public:
-    Token(std::string lexeme, TokenType type) : lexeme(lexeme), type(type) {
-      std::transform(lexeme.begin(), lexeme.end(), lexeme.begin(), ::tolower);
-      identifier = lexeme;
-      if(tokenident.find(type) != tokenident.end())
-      {
-          identifier = tokenident.at(type);
-      } else {
-          std::transform(
-              identifier.begin(), identifier.end(), identifier.begin(), ::toupper);
-      }
-    }
-    friend std::ostream &operator<<(std::ostream &os, const Token &token);
+    ErrorInScanner() = default;
+    void add_error(std::string s);
+    ~ErrorInScanner();
+
+    int  get_retvalue() const;
+    void set_retvalue(int value);
+
   private:
-    std::string identifier;
-    std::string lexeme;
-    TokenType type;
+    std::vector<std::string> msg;
+    int                      retvalue = 0;
 };
+
+class Token{
+    public:
+        Token(TokenType type, std::string lexeme, std::string literal, int line) : type(type), lexeme(lexeme), literal(literal), line(line) {}
+        friend std::ostream &operator<<(std::ostream &os, const Token &token);
+    private:
+        TokenType type;
+        std::string lexeme;
+        std::string literal;
+        int line;
+};
+
 class Scanner {
   public:
     Scanner(const std::string &file_contents) : p_file_contents(file_contents) {}
-    std::vector<Token> get_tokens()
+    std::vector<Token>   get_tokens()
     {
         read_file();
         return tokens;
@@ -38,9 +46,10 @@ class Scanner {
 
   private:
     void read_file();
-    void add_token(const std::string &str, TokenType type);
+    void add_token(std::string s);
     char advance();
     void scanChar();
+    bool match(char c);
 
     std::vector<Token> tokens;
     std::string p_file_contents;
@@ -48,6 +57,7 @@ class Scanner {
     int _start = 0;
     int _end = 0;
     int line_number = 1;
+    ErrorInScanner error;
 };
 } // namespace lox
 
