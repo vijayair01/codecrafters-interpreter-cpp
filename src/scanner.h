@@ -38,7 +38,7 @@ class Token{
 class Scanner {
   public:
     Scanner(const std::string &file_contents) : p_file_contents(file_contents) {}
-    std::vector<Token>   get_tokens()
+    std::vector<Token> get_tokens()
     {
         read_file();
         return tokens;
@@ -46,16 +46,24 @@ class Scanner {
 
   private:
     void read_file();
-    void add_token(std::string s);
-    char advance();
     void scanChar();
+    void add_token(std::string s);
+    bool add_existing_token(const std::string &s);
+    bool add_reserved_keyword(const std::string &s);
+    bool add_string_token(const std::string &s);
+    bool add_number_token(std::string &s);
+    void handle_unexpected_char(char c);
+    void handle_two_char_token(char c);
+    void handle_slash();
+    void handle_string();
+    void handle_default(char c);
     char peek();
+    char advance();
 
     std::vector<Token> tokens;
     std::string p_file_contents;
     int current = 0;
-    int _start = 0;
-    int _end = 0;
+    int _start = -1;
     int line_number = 1;
     ErrorInScanner error;
 };

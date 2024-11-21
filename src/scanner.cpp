@@ -2,58 +2,6 @@
 
 namespace lox {
 
-void Scanner::add_token(std::string s)
-{
-    for(auto tokeniter = tokenident.begin(); tokeniter != tokenident.end(); tokeniter++)
-    {
-        if(tokeniter->second.second == s)
-        {
-            tokens.push_back(Token(tokeniter->first, "", "", line_number));
-            return;
-        }
-    }
-    if(reservedkeywords.find(s) != reservedkeywords.end())
-    {
-        auto t = s;
-        std::transform(t.begin(), t.end(), t.begin(), ::tolower);
-        std::transform(s.begin(), s.end(), s.begin(), ::toupper);
-        std::string lexeme = "\"" + s + "\"";
-        tokens.push_back(Token(reservedkeywords.at(s), s, t, line_number));
-        return;
-    }
-    int count = std::count(s.begin(), s.end(), '.');
-    if(std::find_if(s.begin(), s.end(), [](char &c) { return !isdigit(c) && c != '.'; }) ==
-       s.end() && count <= 1)
-    {
-        std::string num = count == 1 ? s : s + ".0";
-        tokens.push_back(Token(TokenType::NUMBER, s, num, line_number));
-        return;
-    }
-    std::string lexeme = "\"" + s + "\"";
-    tokens.push_back(Token(TokenType::STRING, lexeme, s, line_number));
-}
-
-std::ostream &operator<<(std::ostream &os, const Token &token)
-{
-    if(tokenident.find(token.type) != tokenident.end())
-    {
-        os << tokenident.at(token.type).first << " " << tokenident.at(token.type).second << " null";
-    }
-    else if(token.type == TokenType::STRING)
-    {
-        os << "STRING " << token.lexeme << " " << token.literal;
-    }
-    else if(token.type >= TokenType::AND && token.type <= TokenType::CLASS)
-    {
-        os << token.lexeme << " " << token.literal << " null";
-    }
-    else
-    {
-        os << "UNKNOWN " << token.lexeme << " " << token.literal;
-    }
-    return os;
-}
-
 void Scanner::read_file()
 {
     try {
@@ -87,65 +35,19 @@ void Scanner::scanChar()
     case '$':
     case '^':
     case '%':
-        std::cerr << "[line " << line_number << "] Error: Unexpected character: " << c
-                  << std::endl;
-        error.set_retvalue(65);
+        handle_unexpected_char(c);
         break;
     case '!':
     case '=':
     case '<':
     case '>':
-        {
-            std::string curr = std::string(1, c);
-            if(peek() == '=')
-            {
-                curr += peek();
-                add_token(curr);
-                advance();
-            }
-            else
-            {
-                add_token(curr);
-            }
-        }
+        handle_two_char_token(c);
         break;
     case '/':
-        if(peek() == '/')
-        {
-            while(peek() != '\n' && peek() != '\0')
-            {
-                advance();
-            }
-        }
-        else
-        {
-            add_token(std::string(1, c));
-        }
+        handle_slash();
         break;
-    break;
     case '\"':
-        {
-            char quote = c;
-            std::string ans = "";
-            while(peek() != quote && peek() != '\0')
-            {
-                ans += peek();
-                if(peek() == '\n')
-                {
-                    line_number++;
-                }
-                advance();
-            }
-            if(peek() == '\0')
-            {
-                std::cerr << "[line " << line_number << "] Error: Unterminated string." << std::endl;
-                error.set_retvalue(65);
-            }
-            else{
-                add_token(ans);
-                advance();
-            }
-        }
+        handle_string();
         break;
     case '\n':
         line_number++;
@@ -154,20 +56,122 @@ void Scanner::scanChar()
     case ' ':
         break;
     default:
-    {
-        if(isalnum(c) || c == '.')
-        {
-            std::string ans = std::string(1, c);
-            while(isalnum(peek()) || peek() == '.')
-            {
-                ans += peek();
-                advance();
-            }
-            add_token(ans);
-        }
-    }
+        handle_default(c);
         break;
     }
+}
+
+void Scanner::add_token(std::string s)
+{
+    if (add_existing_token(s) || add_reserved_keyword(s) || add_string_token(s) || add_number_token(s)) {
+        return;
+    }
+    if (!s.empty()) {
+        tokens.push_back(Token(TokenType::LITERAL, s, s, line_number));
+    }
+}
+
+bool Scanner::add_existing_token(const std::string& s) {
+    auto it = std::find_if(tokenident.begin(), tokenident.end(), [&s](const auto &p) { return p.second.second == s; });
+    if(it != tokenident.end()) {
+        tokens.push_back(Token(it->first, "", "", line_number));
+        return true;
+    }
+    return false;
+}
+
+bool Scanner::add_reserved_keyword(const std::string& s) {
+    if(reservedkeywords.find(s) != reservedkeywords.end()) {
+        auto t = s;
+        auto u = s;
+        std::transform(t.begin(), t.end(), t.begin(), ::tolower);
+        std::transform(u.begin(), u.end(), u.begin(), ::toupper);
+        tokens.push_back(Token(reservedkeywords.at(t), u, t, line_number));
+        return true;
+    }
+    return false;
+}
+
+bool Scanner::add_string_token(const std::string& s) {
+    if(s.size() > 1 && s[0] == '\"' && s[s.size() - 1] == '\"') {
+        std::string lexeme  = s;
+        std::string literal = s.substr(1, s.size() - 2);
+        tokens.push_back(Token(TokenType::STRING, lexeme, literal, line_number));
+        return true;
+    }
+    return false;
+}
+
+bool Scanner::add_number_token(std::string& s) {
+    std::string t;
+    int countdots = 0;
+    while(!s.empty() && (isdigit(s[0]) || (countdots == 0 && s[0] == '.'))) {
+        if(s[0] == '.') {
+            countdots++;
+        }
+        t += s[0];
+        s.erase(s.begin());
+    }
+    if(!t.empty()) {
+        std::string num = t + ".0";
+        if(countdots == 1) {
+            num = t;
+            auto it = std::find_if(num.rbegin(), num.rend(), [](char &c) { return c != '0'; });
+            num.erase(it.base(), num.end());
+            if(num[num.size() - 1] == '.') {
+                num += "0";
+            }
+        }
+        tokens.push_back(Token(TokenType::NUMBER, t, num, line_number));
+        return true;
+    }
+    return false;
+}
+
+void Scanner::handle_unexpected_char(char c) {
+    std::cerr << "[line " << line_number << "] Error: Unexpected character: " << c << std::endl;
+    error.set_retvalue(65);
+}
+
+void Scanner::handle_two_char_token(char c) {
+    std::string curr(1, c);
+    if(peek() == '=') {
+        curr += advance();
+    }
+    add_token(curr);
+}
+
+void Scanner::handle_slash() {
+    if(peek() == '/') {
+        while(peek() != '\n' && peek() != '\0') {
+            advance();
+        }
+    } else {
+        add_token(std::string(1, '/'));
+    }
+}
+
+void Scanner::handle_string() {
+    std::string ans;
+    while(peek() != '\"' && peek() != '\0') {
+        if(peek() == '\n') line_number++;
+        ans += advance();
+    }
+    if(peek() == '\0') {
+        std::cerr << "[line " << line_number << "] Error: Unterminated string." << std::endl;
+        error.set_retvalue(65);
+    } else {
+        advance();
+        add_token("\"" + ans + "\"");
+    }
+}
+
+void Scanner::handle_default(char c) {
+    std::string ans(1, c);
+    while (!isspace(peek()) && peek() != '\0' && (isalnum(peek()) || peek() == '.' || peek() == '_')) {
+        ans += advance();
+    }
+    add_token(ans);
 }
 
 char Scanner::peek()
@@ -184,6 +188,31 @@ char Scanner::advance()
         return '\0';
     }
     return p_file_contents[current++];
+}
+
+std::ostream &operator<<(std::ostream &os, const Token &token)
+{
+    if(tokenident.find(token.type) != tokenident.end())
+    {
+        os << tokenident.at(token.type).first << " " << tokenident.at(token.type).second << " null";
+    }
+    else if(token.type == TokenType::STRING)
+    {
+        os << "STRING " << token.lexeme << " " << token.literal;
+    }
+    else if(token.type == TokenType::NUMBER)
+    {
+        os << "NUMBER " << token.lexeme << " " << token.literal;
+    }
+    else if(token.type >= TokenType::AND)
+    {
+        os << token.lexeme << " " << token.literal << " null";
+    }
+    else
+    {
+        os << "IDENTIFIER " << token.lexeme << " null";
+    }
+    return os;
 }
 
 void ErrorInScanner::add_error(std::string s)
