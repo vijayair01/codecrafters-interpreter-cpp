@@ -45,6 +45,7 @@ enum TokenType
     TRUE,
     VAR,
     WHILE,
+    IDENTIFIER,
     END_OF_FILE
 };
 

@@ -1,0 +1,5 @@
+var b = 65;
+var a = 65;
+b = a;
+a = b;
+print a + b;

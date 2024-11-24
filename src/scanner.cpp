@@ -67,7 +67,7 @@ void Scanner::add_token(std::string s)
         return;
     }
     if (!s.empty()) {
-        tokens.push_back(Token(TokenType::LITERAL, s, s, line_number));
+        tokens.push_back(Token(TokenType::IDENTIFIER, s, s, line_number));
     }
 }
 
@@ -203,7 +203,7 @@ std::ostream &operator<<(std::ostream &os, const Token &token)
     {
         os << "NUMBER " << token.lexeme << " " << token.literal;
     }
-    else if(token.type >= TokenType::AND)
+    else if(token.type >= TokenType::AND && token.type <= TokenType::WHILE)
     {
         os << token.lexeme << " " << token.literal << " null";
     }

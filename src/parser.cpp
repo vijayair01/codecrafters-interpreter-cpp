@@ -96,10 +96,10 @@ std::shared_ptr<Expression> Parser::primary()
     if(match({TokenType::TRUE})) return std::make_shared<Literal>("true");
     if(match({TokenType::NIL})) return std::make_shared<Literal>("nil");
 
-    if(match({TokenType::NUMBER, TokenType::STRING}))
+    if(match({TokenType::NUMBER, TokenType::STRING, TokenType::LITERAL}))
     {
         auto retVal       = std::make_shared<Literal>(previous().literal);
-        retVal->getstring = previous().get_type() == TokenType::STRING;
+        retVal->getstring = previous().type != TokenType::NUMBER;
         return retVal;
     }
 
@@ -129,12 +129,12 @@ bool Parser::match(const std::vector<TokenType> &types)
 bool Parser::check(TokenType type)
 {
     if(isAtEnd()) return false;
-    return peek().get_type() == type;
+    return peek().type == type;
 }
 
 bool Parser::isAtEnd()
 {
-    return peek().get_type() == TokenType::END_OF_FILE;
+    return peek().type == TokenType::END_OF_FILE;
 }
 
 Token Parser::advance()
@@ -162,7 +162,7 @@ Token Parser::consume(TokenType type, const std::string &message)
 
 void Parser::error(const Token &token, const std::string &message)
 {
-    if(token.get_type() == TokenType::END_OF_FILE)
+    if(token.type == TokenType::END_OF_FILE)
     {
         report(token.line, " at end", message);
     }

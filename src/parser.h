@@ -12,6 +12,7 @@
 namespace lox {
 using EvalResult = std::variant<double, bool, std::string>;
 
+
 class Expression
 {
   public:
@@ -22,7 +23,6 @@ class Expression
     }
     virtual EvalResult evaluate() = 0;
     bool               getstring  = false;
-
   protected:
   private:
 };
@@ -42,9 +42,9 @@ class Binary : public Expression
     {
         std::stringstream ss;
         ss << "(";
-        if(tokenident.find(op.get_type()) != tokenident.end())
+        if(tokenident.find(op.type) != tokenident.end())
         {
-            ss << tokenident.at(op.get_type()).second << " ";
+            ss << tokenident.at(op.type).second << " ";
         }
         ss << left->form_string() << " " << right->form_string() + ")";
         return ss.str();
@@ -58,27 +58,29 @@ class Binary : public Expression
                                std::holds_alternative<double>(right_result);
         bool are_both_boolean = std::holds_alternative<bool>(left_result) &&
                                 std::holds_alternative<bool>(right_result);
-        if(op.get_type() == TokenType::GREATER)
+
+        ErrorInScanner error;
+        if(op.type == TokenType::GREATER)
         {
             if(are_both_double)
                 return std::get<double>(left_result) > std::get<double>(right_result);
         }
-        else if(op.get_type() == TokenType::GREATER_EQUAL)
+        else if(op.type == TokenType::GREATER_EQUAL)
         {
             if(are_both_double)
                 return std::get<double>(left_result) >= std::get<double>(right_result);
         }
-        else if(op.get_type() == TokenType::LESS)
+        else if(op.type == TokenType::LESS)
         {
             if(are_both_double)
                 return std::get<double>(left_result) < std::get<double>(right_result);
         }
-        else if(op.get_type() == TokenType::LESS_EQUAL)
+        else if(op.type == TokenType::LESS_EQUAL)
         {
             if(are_both_double)
                 return std::get<double>(left_result) <= std::get<double>(right_result);
         }
-        else if(op.get_type() == TokenType::EQUAL_EQUAL)
+        else if(op.type == TokenType::EQUAL_EQUAL)
         {
             return are_both_double
                        ? std::get<double>(left_result) == std::get<double>(right_result)
@@ -87,7 +89,7 @@ class Binary : public Expression
                                             : std::get<bool>(left_result) ==
                                                   std::get<bool>(right_result));
         }
-        else if(op.get_type() == TokenType::BANG_EQUAL)
+        else if(op.type == TokenType::BANG_EQUAL)
         {
             return are_both_double
                        ? std::get<double>(left_result) != std::get<double>(right_result)
@@ -96,46 +98,49 @@ class Binary : public Expression
                                             : std::get<bool>(left_result) !=
                                                   std::get<bool>(right_result));
         }
-        else if(op.get_type() == TokenType::PLUS)
+        else if(op.type == TokenType::PLUS)
         {
             if(are_both_double)
                 return std::get<double>(left_result) + std::get<double>(right_result);
-            if(!are_both_boolean)
+
+            if(std::holds_alternative<std::string>(left_result) &&
+               std::holds_alternative<std::string>(right_result))
             {
                 return std::get<std::string>(left_result) +
                        std::get<std::string>(right_result);
             }
-            throw std::runtime_error("Operands must be two numbers or two strings.");
+            error.add_error("Operands must be two numbers or two strings.");
         }
-        else if(op.get_type() == TokenType::AND)
+        else if(op.type == TokenType::AND)
         {
             if(std::holds_alternative<bool>(left_result) &&
                std::holds_alternative<bool>(right_result))
             {
                 return std::get<bool>(left_result) && std::get<bool>(right_result);
             }
-            throw std::runtime_error("Operands must be two booleans.");
+            error.add_error("Operands must be two booleans.");
         }
-        else if(op.get_type() == TokenType::OR)
+        else if(op.type == TokenType::OR)
         {
             if(std::holds_alternative<bool>(left_result) &&
                std::holds_alternative<bool>(right_result))
             {
                 return std::get<bool>(left_result) || std::get<bool>(right_result);
             }
-            throw std::runtime_error("Operands must be two booleans.");
+            error.add_error("Operands must be two booleans.");
         }
         else if(are_both_double)
         {
             double left_val  = std::get<double>(left_result);
             double right_val = std::get<double>(right_result);
-            return (op.get_type() == TokenType::MINUS
+            return (op.type == TokenType::MINUS
                         ? left_val - right_val
-                        : (op.get_type() == TokenType::STAR
+                        : (op.type == TokenType::STAR
                                ? left_val * right_val
-                               : (op.get_type() == TokenType::SLASH ? left_val / right_val : 0.0)));
+                               : (op.type == TokenType::SLASH ? left_val / right_val : 0.0)));
         }
-        throw std::runtime_error("Operands must be numbers.");
+        error.set_retvalue(70);
+        return "";
     }
 
   private:
@@ -161,9 +166,9 @@ class Unary : public Expression
     {
         std::stringstream ss;
         ss << "(";
-        if(tokenident.find(op.get_type()) != tokenident.end())
+        if(tokenident.find(op.type) != tokenident.end())
         {
-            ss << tokenident.at(op.get_type()).second << " ";
+            ss << tokenident.at(op.type).second << " ";
         }
         ss << right->form_string() + ")";
         return ss.str();
@@ -175,19 +180,21 @@ class Unary : public Expression
 
         if(std::holds_alternative<bool>(right_result))
         {
-            if(op.lexeme == "!") return !std::get<bool>(right_result);
+            if(op.type == TokenType::BANG) return !std::get<bool>(right_result);
         }
         else if(std::holds_alternative<double>(right_result))
         {
-            if(op.lexeme == "-") return -std::get<double>(right_result);
+            if(op.type == TokenType::MINUS) return -std::get<double>(right_result);
             return false;
         }
         else if(std::holds_alternative<std::string>(right_result))
         {
-            if(op.lexeme == "!") return (std::get<std::string>(right_result) == "nil");
+            if(op.type == TokenType::BANG) return (std::get<std::string>(right_result) == "nil");
         }
-
-        throw std::runtime_error("Operand must be a number.");
+        ErrorInScanner error;
+        error.add_error("Operand must be a number.");
+        error.set_retvalue(70);
+        return "";
     }
 };
 
