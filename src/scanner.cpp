@@ -227,7 +227,7 @@ ErrorInScanner::~ErrorInScanner()
     }
     if(retvalue !=0)
     {
-        //exit(retvalue);
+        exit(retvalue);
     }
 }
 

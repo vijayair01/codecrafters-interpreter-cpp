@@ -48,11 +48,6 @@ int main(int argc, char *argv[]) {
             }
             lox::Parser parser(tokens);
             auto expr = parser.parse();
-            if(expr == nullptr)
-            {
-                //std::cerr << "Error parsing" << std::endl;
-                return 65;
-            }
             std::cout << expr->form_string() << std::endl;
         }
         else
