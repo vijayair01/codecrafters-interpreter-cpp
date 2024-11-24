@@ -96,16 +96,10 @@ std::shared_ptr<Expression> Parser::primary()
     if(match({TokenType::TRUE})) return std::make_shared<Literal>("true");
     if(match({TokenType::NIL})) return std::make_shared<Literal>("nil");
 
-    if(match({TokenType::NUMBER}))
-    {
-        auto retVal       = std::make_shared<Literal>(previous().literal);
-        return retVal;
-    }
-
     if(match({TokenType::NUMBER, TokenType::STRING}))
     {
-        auto retVal       = std::make_shared<Literal>(previous().lexeme);
-        retVal->getstring = true;
+        auto retVal       = std::make_shared<Literal>(previous().literal);
+        retVal->getstring = previous().get_type() == TokenType::STRING;
         return retVal;
     }
 
