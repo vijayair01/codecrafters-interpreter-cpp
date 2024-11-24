@@ -123,7 +123,6 @@ bool Scanner::add_number_token(std::string& s) {
             }
         }
         tokens.push_back(Token(TokenType::NUMBER, t, num, line_number));
-        return true;
     }
     return false;
 }

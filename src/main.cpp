@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include "scanner.h"
+#include "parser.h"
 
 std::string read_file_contents(const std::string& filename);
 using lox::Scanner;
@@ -24,11 +25,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    const std::string command = argv[1];
+    const std::string command       = argv[1];
+    std::string       file_contents = read_file_contents(argv[2]);
 
     if (command == "tokenize") {
-        std::string file_contents = read_file_contents(argv[2]);
-
         if (!file_contents.empty()) {
             Scanner scanner(file_contents);
             auto tokens = scanner.get_tokens();
@@ -37,7 +37,22 @@ int main(int argc, char *argv[]) {
         else {
             std::cout << "EOF  null" << std::endl;
         }        
-    } else {
+    } 
+    else if(command == "parse") {
+        if(!file_contents.empty())
+        {
+            Scanner scanner(file_contents);
+            auto    tokens = scanner.get_tokens();
+            lox::Parser parser(tokens);
+            auto expr = parser.parse();
+            std::cout << expr->form_string() << std::endl;
+        }
+        else
+        {
+            std::cout << "EOF  null" << std::endl;
+        }
+    }
+    else {
         std::cerr << "Unknown command: " << command << std::endl;
         return 1;
     }
