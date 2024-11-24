@@ -46,9 +46,15 @@ int main(int argc, char *argv[]) {
                 Scanner scanner(file_contents);
                 tokens = scanner.get_tokens();
             }
-            lox::Parser parser(tokens);
-            auto expr = parser.parse();
-            std::cout << expr->form_string() << std::endl;
+            if(!tokens.empty())
+            {
+                lox::Parser parser(tokens);
+                auto expr = parser.parse();
+                if(expr)
+                {
+                    std::cout << expr->form_string() << std::endl;
+                }
+            }
         }
         else
         {
