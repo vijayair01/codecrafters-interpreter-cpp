@@ -41,10 +41,18 @@ int main(int argc, char *argv[]) {
     else if(command == "parse") {
         if(!file_contents.empty())
         {
-            Scanner scanner(file_contents);
-            auto    tokens = scanner.get_tokens();
+            std::vector<lox::Token> tokens;
+            {
+                Scanner scanner(file_contents);
+                tokens = scanner.get_tokens();
+            }
             lox::Parser parser(tokens);
             auto expr = parser.parse();
+            if(expr == nullptr)
+            {
+                //std::cerr << "Error parsing" << std::endl;
+                return 65;
+            }
             std::cout << expr->form_string() << std::endl;
         }
         else

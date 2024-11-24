@@ -225,9 +225,9 @@ ErrorInScanner::~ErrorInScanner()
     {
         std::cerr << error << std::endl;
     }
-    if(retvalue)
+    if(retvalue !=0)
     {
-        exit(retvalue);
+        //exit(retvalue);
     }
 }
 
