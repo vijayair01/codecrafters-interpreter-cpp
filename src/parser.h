@@ -159,7 +159,14 @@ class Unary : public Expression
     Unary(Token op, std::shared_ptr<Expression> right) : op(op), right(right) {}
     virtual std::string form_string() override
     {
-        return "(" + op.lexeme + " " + right->form_string() + ")";
+        std::stringstream ss;
+        ss << "(";
+        if(tokenident.find(op.get_type()) != tokenident.end())
+        {
+            ss << tokenident.at(op.get_type()).second << " ";
+        }
+        ss << right->form_string() + ")";
+        return ss.str();
     }
 
     EvalResult evaluate() override
